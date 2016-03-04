@@ -28,6 +28,8 @@ category = Category.MONEYMAKING)
 
 public class main extends AbstractScript {
 
+    Point[] lastPositions = new Point[15];
+    
     Font font;
     Item knife;
     Item nextChocolate;
@@ -53,11 +55,14 @@ public class main extends AbstractScript {
 	
 	public void onStart()
 	{
+		getClient().getInstance().setDrawMouse(false);
+		
 		//Winblows users
         font = new Font("Arial", Font.PLAIN, 12);
         
         if(System.getProperty("os.name").contains("nix"))
         	font = new Font("Sans", Font.PLAIN, 12);
+        
         
 		timeBegan = System.currentTimeMillis();
 		
@@ -106,6 +111,7 @@ public class main extends AbstractScript {
 	}
 
 	public void onExit() {
+		getClient().getInstance().setDrawMouse(true);
 		log("~~~ Bye!");
 	}
 	
@@ -138,6 +144,44 @@ public class main extends AbstractScript {
         		"Hourly Profit: " + (int)((profit / (timeRan / 3600000d)) / 1000d) + "k"
         		};
 
+        
+    	Point currentPosition = getMouse().getPosition();
+        // Shift all elements down and insert the new element
+		for(int i=0;i<lastPositions.length - 1;i++){
+			lastPositions[i]=lastPositions[i+1];
+		}
+		lastPositions[lastPositions.length - 1] = new Point(currentPosition.x, currentPosition.y);
+        
+		// This is the point before the new point to draw to
+        Point lastpoint = null;
+        
+        Color mColor = new Color(255, 75, 50);
+        //Go in reverse
+        for(int i=lastPositions.length - 1;i>=0;i--)
+        {
+        	Point p = lastPositions[i];
+        	if(p != null)
+        	{
+	        	if(lastpoint == null)
+	        		lastpoint = p;
+	        	
+	        	g.setColor(mColor);
+	        	g.drawLine(lastpoint.x, lastpoint.y, p.x, p.y);
+        	}
+        	lastpoint = p;
+        	
+        	//Every 2 steps - mouse fade out
+        	if(i % 2 == 0)
+        		mColor = mColor.darker();
+        }
+
+        g.setColor(Color.BLACK);
+        g.drawOval(currentPosition.x - 3, currentPosition.y - 3, 7, 7);
+        g.setColor(Color.WHITE);
+        g.drawRect(currentPosition.x, currentPosition.y, 1, 1);
+        
+        
+        
         g.setFont(font);
         g.setColor(new Color(0f, 0f, 0f, 0.6f));
         g.fillRect(0, startHeight - lineHeight, 230, lineHeight * (paintLines.length + 1));
